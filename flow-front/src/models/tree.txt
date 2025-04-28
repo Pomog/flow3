@@ -1,0 +1,235 @@
+===== ./BaseStep.ts =====
+import {EquipmentUsage} from "./common/Equipment.ts";
+import {MaterialUsage} from "./common/Material.ts";
+import {ProcessParameter} from "./common/Parameter.ts";
+import {UtilityUsage} from "./common/Utility.ts";
+import {StepKind} from "./enums.ts";
+import {AdditionPayload} from "./payloads/AdditionPayload.ts";
+import {SeparationPayload} from "./payloads/SeparationPayload.ts";
+import {AnalysisPayload} from "./payloads/AnalysisPayload.ts";
+import {StoragePayload} from "./payloads/StoragePayload.ts";
+import {TransformationPayload} from "./payloads/TransformationPayload.ts";
+
+export interface BaseStep {
+    id: string;
+    kind: StepKind;
+    title: string;
+    projectName: string;
+    synthesisStage: string;
+    description: string;
+    comments?: string;
+
+    plannedStart: string;           // ISO-8601
+    plannedEnd: string;             // ISO-8601
+    expectedDurationMin: number;
+
+    labPersonnelRequired: number;
+    equipment: EquipmentUsage;
+
+    inputMaterials:  MaterialUsage[];
+    outputMaterials: (MaterialUsage & { isMain: boolean; destStepIds?: string[] })[];
+    outputWastes:    MaterialUsage[];
+
+    parameters: ProcessParameter[];
+    utilities?: UtilityUsage[];
+
+    qdqsRequired: boolean;
+
+    previousStepId?: string;
+    nextStepId?: string;
+}
+
+export type ProcessStep =
+    | (BaseStep & { kind: 'Addition';       payload: AdditionPayload })
+    | (BaseStep & { kind: 'Separation';     payload: SeparationPayload })
+    | (BaseStep & { kind: 'Transformation'; payload: TransformationPayload })
+    | (BaseStep & { kind: 'Storage';        payload: StoragePayload })
+    | (BaseStep & { kind: 'Analysis';       payload: AnalysisPayload });
+
+===== ./common/Equipment.ts =====
+export interface EquipmentUsage {
+    equipmentId: string;
+    code: string;
+    name: string;
+    description?: string;
+    capacityL?: number;
+    energyKWhPerHour?: number;
+}
+
+===== ./common/Material.ts =====
+import {MaterialSource} from "../enums.ts";
+
+export interface MaterialRef {
+    materialId: string;
+    code: string;
+    cas?: string;
+    name: string;
+    densityKgL?: number;
+    costPerKg?: number;
+    molarMass?: number;
+}
+
+export interface MaterialUsage extends MaterialRef {
+    source: MaterialSource;
+    amountKg: number;
+    amountL?: number;
+    producedInStepId?: string;
+}
+
+===== ./common/Parameter.ts =====
+import { Criticality, Unit } from '../enums';
+
+export interface ProcessParameter {
+    name: string;
+    target: number;
+    unit: Unit;
+    criticality: Criticality;
+}
+
+===== ./common/Utility.ts =====
+import {Unit, Utility} from "../enums.ts";
+
+export interface UtilityUsage {
+    utility: Utility,
+    mediumName?: string; // 'Nitrogen'
+    amount: number;
+    unit: Unit;
+}
+
+===== ./dump_tree.sh =====
+#!/usr/bin/env bash
+# Usage: ./dump_tree.sh [source_dir] [output_file]
+
+set -euo pipefail
+
+SRC_DIR=${1:-.}
+OUT_FILE=${2:-tree.txt}
+
+: > "$OUT_FILE"
+
+# find:  -type f
+#        ! -samefile "$OUT_FILE"
+#        -print0
+find "$SRC_DIR" -type f ! -samefile "$OUT_FILE" -print0 |
+while IFS= read -r -d '' file; do
+  {
+    printf '===== %s =====\n' "$file"
+    cat "$file"
+    printf '\n\n'
+  } >> "$OUT_FILE"
+done
+
+echo "Done. Written to: $OUT_FILE"
+
+
+===== ./enums.ts =====
+import {SeparationPayload} from "./payloads/SeparationPayload.ts";
+
+export type StepKind =
+    | 'Addition'
+    | 'Separation'
+    | 'Transformation'
+    | 'Storage'
+    | 'Analysis';
+
+export type Criticality = 'CP' | 'PC' | 'CY' | 'KP' | 'O' | 'N';
+
+export type MaterialSource = 'Purchased' | 'Intermediate' | 'Recovered';
+
+export type Unit =
+    | 'kg' | 'g' | 'L' | 'mL'
+    | '°C' | 'kPa' | 'bar'
+    | 'rpm' | 'min' | 'kWh'
+    | 'Nm3' | 'm3';
+
+export type Utility =
+    | 'Electricity'
+    | 'CoolingWater'
+    | 'ChilledWater'
+    | 'InertGas'
+    | 'CompressedAir'
+    | 'Vacuum'
+    | 'Other';
+
+export type PayloadMode = 'batch' | 'continuous';
+
+export type Transformation =
+    | 'Chemical'
+    | 'Crystallisation'
+    | 'Other';
+
+export type SeparationMethod =
+    | 'filtration'
+    | 'centrifugation'
+    | 'distillation'
+    | 'drying';
+
+export type SeparationSubMethod =
+    | 'vacuum'
+    | 'pressure'
+    | 'crossflow'
+    | 'Nutsche filter'
+    | 'Druck filter'
+    | 'rotary';
+
+export type StorageContainer =
+    | 'Canister'
+    | 'Drum'
+    | 'IBC'
+    | 'Bag';
+
+
+
+===== ./payloads/AdditionPayload.ts =====
+import {PayloadMode} from "../enums.ts";
+
+export interface AdditionPayload {
+    mode: PayloadMode;
+    feedRateKgMin?: number;
+    durationMin: number;
+}
+
+===== ./payloads/AnalysisPayload.ts =====
+export interface AnalysisPayload {
+    analysisName: string;
+    specification?: string;
+    rawDataUri?: string;
+    processedDataUri?: string;
+    passStepId: string;
+    failStepId: string;
+}
+
+===== ./payloads/SeparationPayload.ts =====
+import {SeparationMethod, SeparationSubMethod} from "../enums.ts";
+
+export interface SeparationPayload {
+    /** base separation method */
+    method: SeparationMethod;
+
+    /** additional method — optional */
+    subMethod?: SeparationSubMethod;
+
+    /** e.g. 'remove solvent', 'collect cake', 'reduce moisture <5 %' */
+    objective?: string;
+}
+
+===== ./payloads/StoragePayload.ts =====
+import {StorageContainer} from "../enums.ts";
+
+export interface StoragePayload {
+    locationId: string;
+    container: StorageContainer;
+    containerVolumeL: number;
+    maxHoldHours?: number;
+}
+
+===== ./payloads/TransformationPayload.ts =====
+import {Transformation} from "../enums.ts";
+
+export interface TransformationPayload {
+    transformation: Transformation;
+    temperatureProfile: string;   // JSON or free text
+    pressureProfile?: string;
+    targetConversionPct?: number;
+}
+
