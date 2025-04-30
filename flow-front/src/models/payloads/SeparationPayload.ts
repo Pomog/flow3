@@ -1,4 +1,4 @@
-import {SeparationMethod, SeparationSubMethod} from "../enums.ts";
+import {SeparationMethod, SeparationSubMethod} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface SeparationPayload {
     /** base separation method */

@@ -1,4 +1,4 @@
-import {MaterialSource} from "../enums.ts";
+import {MaterialSource} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface MaterialRef {
     materialId: string;

@@ -1,4 +1,4 @@
-import {PayloadMode} from "../enums.ts";
+import {PayloadMode} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface AdditionPayload {
     mode: PayloadMode;

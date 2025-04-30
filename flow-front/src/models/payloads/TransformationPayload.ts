@@ -1,4 +1,4 @@
-import {Transformation} from "../enums.ts";
+import {Transformation} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface TransformationPayload {
     transformation: Transformation;

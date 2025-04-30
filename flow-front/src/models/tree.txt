@@ -3,7 +3,7 @@ import {EquipmentUsage} from "./common/Equipment.ts";
 import {MaterialUsage} from "./common/Material.ts";
 import {ProcessParameter} from "./common/Parameter.ts";
 import {UtilityUsage} from "./common/Utility.ts";
-import {StepKind} from "./enums.ts";
+import {StepKind} from "./ProcesEnums.ts";
 import {AdditionPayload} from "./payloads/AdditionPayload.ts";
 import {SeparationPayload} from "./payloads/SeparationPayload.ts";
 import {AnalysisPayload} from "./payloads/AnalysisPayload.ts";
@@ -57,7 +57,7 @@ export interface EquipmentUsage {
 }
 
 ===== ./common/Material.ts =====
-import {MaterialSource} from "../enums.ts";
+import {MaterialSource} from "../ProcesEnums.ts";
 
 export interface MaterialRef {
     materialId: string;
@@ -87,7 +87,7 @@ export interface ProcessParameter {
 }
 
 ===== ./common/Utility.ts =====
-import {Unit, Utility} from "../enums.ts";
+import {Unit, Utility} from "../ProcesEnums.ts";
 
 export interface UtilityUsage {
     utility: Utility,
@@ -122,7 +122,7 @@ done
 echo "Done. Written to: $OUT_FILE"
 
 
-===== ./enums.ts =====
+===== ./ProcesEnums.ts =====
 import {SeparationPayload} from "./payloads/SeparationPayload.ts";
 
 export type StepKind =
@@ -181,7 +181,7 @@ export type StorageContainer =
 
 
 ===== ./payloads/AdditionPayload.ts =====
-import {PayloadMode} from "../enums.ts";
+import {PayloadMode} from "../ProcesEnums.ts";
 
 export interface AdditionPayload {
     mode: PayloadMode;
@@ -200,7 +200,7 @@ export interface AnalysisPayload {
 }
 
 ===== ./payloads/SeparationPayload.ts =====
-import {SeparationMethod, SeparationSubMethod} from "../enums.ts";
+import {SeparationMethod, SeparationSubMethod} from "../ProcesEnums.ts";
 
 export interface SeparationPayload {
     /** base separation method */
@@ -214,7 +214,7 @@ export interface SeparationPayload {
 }
 
 ===== ./payloads/StoragePayload.ts =====
-import {StorageContainer} from "../enums.ts";
+import {StorageContainer} from "../ProcesEnums.ts";
 
 export interface StoragePayload {
     locationId: string;
@@ -224,7 +224,7 @@ export interface StoragePayload {
 }
 
 ===== ./payloads/TransformationPayload.ts =====
-import {Transformation} from "../enums.ts";
+import {Transformation} from "../ProcesEnums.ts";
 
 export interface TransformationPayload {
     transformation: Transformation;

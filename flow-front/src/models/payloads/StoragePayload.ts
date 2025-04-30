@@ -1,4 +1,4 @@
-import {StorageContainer} from "../enums.ts";
+import {StorageContainer} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface StoragePayload {
     locationId: string;

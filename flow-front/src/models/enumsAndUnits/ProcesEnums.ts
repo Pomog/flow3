@@ -1,5 +1,3 @@
-import {SeparationPayload} from "./payloads/SeparationPayload.ts";
-
 export type StepKind =
     | 'Addition'
     | 'Separation'
@@ -13,12 +11,6 @@ ICH Q8 & FDA Guidance on CPP/CQA
 export type Criticality = 'CP' | 'PC' | 'CY' | 'KP' | 'O' | 'N';
 
 export type MaterialSource = 'Purchased' | 'Intermediate' | 'Recovered';
-
-export type Unit =
-    | 'kg' | 'g' | 'L' | 'mL'
-    | '°C' | 'kPa' | 'bar'
-    | 'rpm' | 'min' | 'kWh'
-    | 'Nm3' | 'm3';
 
 export type Utility =
     | 'Electricity'

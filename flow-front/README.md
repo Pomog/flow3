@@ -49,3 +49,7 @@ Guidance for Industry
 - Original
 - Accurate
 - + complete, consistent, enduring, and available
+
+### Good Manufacturing Practices – ICH Q7 Highlights
+
+### UCUM/ISO 80000

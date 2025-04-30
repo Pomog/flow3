@@ -1,4 +1,5 @@
-import { Criticality, Unit } from '../enums';
+import { Criticality } from '../enumsAndUnits/ProcesEnums.ts';
+import {Unit} from "../enumsAndUnits/UnitSchema.ts";
 
 export interface ProcessParameter {
     name: string;

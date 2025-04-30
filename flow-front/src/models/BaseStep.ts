@@ -2,12 +2,13 @@ import {EquipmentUsage} from "./common/Equipment.ts";
 import {MaterialUsage} from "./common/Material.ts";
 import {ProcessParameter} from "./common/Parameter.ts";
 import {UtilityUsage} from "./common/Utility.ts";
-import {StepKind} from "./enums.ts";
+import {StepKind} from "./enumsAndUnits/ProcesEnums.ts";
 import {AdditionPayload} from "./payloads/AdditionPayload.ts";
 import {SeparationPayload} from "./payloads/SeparationPayload.ts";
 import {AnalysisPayload} from "./payloads/AnalysisPayload.ts";
 import {StoragePayload} from "./payloads/StoragePayload.ts";
 import {TransformationPayload} from "./payloads/TransformationPayload.ts";
+import {UserTimeStamp} from "./common/UserTimeStamp.ts";
 
 export interface BaseStep {
     id: string;
@@ -36,6 +37,10 @@ export interface BaseStep {
 
     previousStepId?: string;
     nextStepId?: string;
+
+    version: string;            // '1.0', '1.1-draft'
+    signed?: UserTimeStamp[];          // userId
+    updated: UserTimeStamp[];         // for Audit
 }
 
 export type ProcessStep =
