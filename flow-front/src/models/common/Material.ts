@@ -16,4 +16,5 @@ export interface MaterialUsage extends MaterialRef {
     amountKg: number;
     amountL?: number;
     producedInStepId?: string;
+    inputForStepId?: string;
 }

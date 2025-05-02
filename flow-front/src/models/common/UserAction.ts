@@ -1,7 +1,7 @@
 import {User} from "./User.ts";
 import {AuditAction} from "../enumsAndUnits/AuditAction.ts";
 
-export interface UserTimeStamp {
+export interface UserAction {
     userId: string;
 
     user: User;

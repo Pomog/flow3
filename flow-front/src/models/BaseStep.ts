@@ -8,7 +8,7 @@ import {SeparationPayload} from "./payloads/SeparationPayload.ts";
 import {AnalysisPayload} from "./payloads/AnalysisPayload.ts";
 import {StoragePayload} from "./payloads/StoragePayload.ts";
 import {TransformationPayload} from "./payloads/TransformationPayload.ts";
-import {UserTimeStamp} from "./common/UserTimeStamp.ts";
+import {UserAction} from "./common/UserAction.ts";
 
 export interface BaseStep {
     id: string;
@@ -19,8 +19,8 @@ export interface BaseStep {
     description: string;
     comments?: string;
 
-    plannedStart: string;           // ISO-8601
-    plannedEnd: string;             // ISO-8601
+    plannedStart: string;   // ISO-8601
+    plannedEnd: string; // ISO-8601
     expectedDurationMin: number;
 
     labPersonnelRequired: number;
@@ -38,9 +38,9 @@ export interface BaseStep {
     previousStepId?: string;
     nextStepId?: string;
 
-    version: string;            // '1.0', '1.1-draft'
-    signed?: UserTimeStamp[];          // userId
-    updated: UserTimeStamp[];         // for Audit
+    version: string;    // '1.0', '1.1-draft'
+    signed?: UserAction[];
+    updated: UserAction[];  // for Audit
 }
 
 export type ProcessStep =
@@ -49,3 +49,13 @@ export type ProcessStep =
     | (BaseStep & { kind: 'Transformation'; payload: TransformationPayload })
     | (BaseStep & { kind: 'Storage';        payload: StoragePayload })
     | (BaseStep & { kind: 'Analysis';       payload: AnalysisPayload });
+
+export interface Process {
+    id: string;
+    name: string;
+    description?: string;
+    steps: ProcessStep[];
+    version: string;
+    created: UserAction;
+    updated: UserAction[];
+}
