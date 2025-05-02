@@ -27,10 +27,15 @@ export interface BaseStep {
     equipment: EquipmentUsage;
 
     inputMaterials:  MaterialUsage[];
+
+    /** Leave empty if step doesn't transform or create new material (e.g., Storage) */
     outputMaterials: (MaterialUsage & { isMain: boolean; destStepIds?: string[] })[];
+    /** Optional; empty for most non-transformative steps */
     outputWastes:    MaterialUsage[];
 
     parameters: ProcessParameter[];
+
+    /** Optional; e.g., CoolingWater, Vacuum */
     utilities?: UtilityUsage[];
 
     qdqsRequired: boolean;
@@ -39,7 +44,8 @@ export interface BaseStep {
     nextStepId?: string;
 
     version: string;    // '1.0', '1.1-draft'
-    signed?: UserAction[];
+
+    created: UserAction;
     updated: UserAction[];  // for Audit
 }
 
@@ -58,4 +64,5 @@ export interface Process {
     version: string;
     created: UserAction;
     updated: UserAction[];
+    signed?: UserAction[];
 }
