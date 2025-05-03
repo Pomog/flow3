@@ -1,0 +1,435 @@
+===== ./BaseStep.ts =====
+import {EquipmentUsage} from "./common/Equipment.ts";
+import {MaterialUsage} from "./common/Material.ts";
+import {ProcessParameter} from "./common/Parameter.ts";
+import {UtilityUsage} from "./common/Utility.ts";
+import {StepKind} from "./enumsAndUnits/ProcesEnums.ts";
+import {AdditionPayload} from "./payloads/AdditionPayload.ts";
+import {SeparationPayload} from "./payloads/SeparationPayload.ts";
+import {AnalysisPayload} from "./payloads/AnalysisPayload.ts";
+import {StoragePayload} from "./payloads/StoragePayload.ts";
+import {TransformationPayload} from "./payloads/TransformationPayload.ts";
+import {UserAction} from "./common/UserAction.ts";
+
+export interface BaseStep {
+    id: string;
+    kind: StepKind;
+    title: string;
+    projectName: string;
+    synthesisStage: string;
+    description: string;
+    comments?: string;
+
+    plannedStart: string;   // ISO-8601
+    plannedEnd: string; // ISO-8601
+    expectedDurationMin: number;
+
+    labPersonnelRequired: number;
+    equipment: EquipmentUsage;
+
+    inputMaterials:  MaterialUsage[];
+
+    /** Leave empty if step doesn't transform or create new material (e.g., Storage) */
+    outputMaterials: (MaterialUsage & { isMain: boolean; destStepIds?: string[] })[];
+    /** Optional; empty for most non-transformative steps */
+    outputWastes:    MaterialUsage[];
+
+    parameters: ProcessParameter[];
+
+    /** Optional; e.g., CoolingWater, Vacuum */
+    utilities?: UtilityUsage[];
+
+    qdqsRequired: boolean;
+
+    previousStepId?: string;
+    nextStepId?: string;
+
+    version: string;    // '1.0', '1.1-draft'
+
+    created: UserAction;
+    updated: UserAction[];  // for Audit
+}
+
+export type ProcessStep =
+    | (BaseStep & { kind: 'Addition';       payload: AdditionPayload })
+    | (BaseStep & { kind: 'Separation';     payload: SeparationPayload })
+    | (BaseStep & { kind: 'Transformation'; payload: TransformationPayload })
+    | (BaseStep & { kind: 'Storage';        payload: StoragePayload })
+    | (BaseStep & { kind: 'Analysis';       payload: AnalysisPayload });
+
+export interface Process {
+    id: string;
+    name: string;
+    description?: string;
+    steps: ProcessStep[];
+    version: string;
+    created: UserAction;
+    updated: UserAction[];
+    signed?: UserAction[];
+}
+
+===== ./common/Equipment.ts =====
+export interface EquipmentUsage {
+    equipmentId: string;
+    code: string;
+    name: string;
+    description?: string;
+    capacityL?: number;
+    energyKWhPerHour?: number;
+}
+
+===== ./common/Material.ts =====
+import {MaterialSource} from "../enumsAndUnits/ProcesEnums.ts";
+
+export interface MaterialRef {
+    materialId: string;
+    code: string;
+    cas?: string;
+    name: string;
+    grade?: string;
+    densityKgL?: number;
+    costPerKg?: number;
+    molarMass?: number;
+}
+
+export interface MaterialUsage extends MaterialRef {
+    source: MaterialSource;
+    amountKg: number;
+    amountL?: number;
+    producedInStepId?: string;
+    inputForStepId?: string;
+}
+
+===== ./common/Parameter.ts =====
+import { Criticality } from '../enumsAndUnits/ProcesEnums.ts';
+import {Unit} from "../enumsAndUnits/UnitSchema.ts";
+
+export interface ProcessParameter {
+    name: string;
+    target: number;
+    unit: Unit;
+    criticality: Criticality;
+}
+
+===== ./common/User.ts =====
+import roles from '../enumsAndUnits/roles.json' assert { type: 'json' };
+
+export const ROLES = roles as const;
+export type Role = typeof ROLES[number];
+
+export interface User {
+    id: string;
+    username: string;
+    fullName: string;
+    email: string;
+    roles: Role[];
+
+    locale?: string;
+
+    timeZone?: string;
+    department?: string;
+    title?: string;
+
+    signatureKey: string;
+    deactivatedAt?: string; // ISO-8601
+    createdAt: string;      // ISO-8601
+    updatedAt?: string;     // ISO-8601
+}
+
+===== ./common/UserAction.ts =====
+import {User} from "./User.ts";
+import {AuditAction} from "../enumsAndUnits/AuditAction.ts";
+
+export interface UserAction {
+    userId: string;
+
+    user: User;
+
+    /**
+     * what happened: e.g. 'create', 'update', 'sign', 'approve', 'reject', 'delete'.
+     */
+    action: AuditAction;
+
+    /** exact date-time in ISO-8601, immutable once written */
+    at: string;
+
+    /** free-text reason / comment – “reason-for-change” */
+    comment?: string;
+
+    /**
+     * hash of the signature object - User + Content;
+     * lets reviewers prove that the signature really belongs to User
+     */
+    signatureHash: string;
+}
+
+===== ./common/Utility.ts =====
+import {Utility} from "../enumsAndUnits/ProcesEnums.ts";
+import {unitSchema} from "../enumsAndUnits/UnitSchema.ts";
+
+export interface UtilityUsage {
+    utility: Utility,
+    mediumName?: string; // 'Nitrogen'
+    amount: number;
+    unit: unitSchema;
+}
+
+===== ./dump_tree.sh =====
+#!/usr/bin/env bash
+# Usage: ./dump_tree.sh [source_dir] [output_file]
+
+set -euo pipefail
+
+SRC_DIR=${1:-.}
+OUT_FILE=${2:-tree.txt}
+
+: > "$OUT_FILE"
+
+# find:  -type f
+#        ! -samefile "$OUT_FILE"
+#        -print0
+find "$SRC_DIR" -type f ! -samefile "$OUT_FILE" -print0 |
+while IFS= read -r -d '' file; do
+  {
+    printf '===== %s =====\n' "$file"
+    cat "$file"
+    printf '\n\n'
+  } >> "$OUT_FILE"
+done
+
+echo "Done. Written to: $OUT_FILE"
+
+
+===== ./enumsAndUnits/AuditAction.ts =====
+export type AuditAction =
+    | 'create'
+    | 'update'
+    | 'sign'
+    | 'approve'
+    | 'reject'
+    | 'delete';
+
+===== ./enumsAndUnits/ProcesEnums.ts =====
+export type StepKind =
+    | 'Addition'
+    | 'Separation'
+    | 'Transformation'
+    | 'Storage'
+    | 'Analysis';
+
+/*
+ICH Q8 & FDA Guidance on CPP/CQA
+ */
+export type Criticality = 'CP' | 'PC' | 'CY' | 'KP' | 'O' | 'N';
+
+export type MaterialSource = 'Purchased' | 'Intermediate' | 'Recovered';
+
+export type Utility =
+    | 'Electricity'
+    | 'CoolingWater'
+    | 'ChilledWater'
+    | 'InertGas'
+    | 'CompressedAir'
+    | 'Vacuum'
+    | 'Other';
+
+export type PayloadMode = 'batch' | 'continuous';
+
+export type Transformation =
+    | 'Chemical'
+    | 'Crystallisation'
+    | 'Other';
+
+export type SeparationMethod =
+    | 'filtration'
+    | 'centrifugation'
+    | 'distillation'
+    | 'drying';
+
+export type SeparationSubMethod =
+    | 'vacuum'
+    | 'pressure'
+    | 'crossflow'
+    | 'rotary';
+
+export type StorageContainer =
+    | 'Canister'
+    | 'Drum'
+    | 'IBC'
+    | 'Bag';
+
+
+
+===== ./enumsAndUnits/roles.json =====
+[
+  "operator",
+  "supervisor",
+  "qa-reviewer",
+  "system-admin",
+  "maintenance-tech"
+]
+
+===== ./enumsAndUnits/UnitCommon.ts =====
+export type UnitGroupForUI =
+    | 'Mass'
+    | 'Volume'
+    | 'Area'
+    | 'Length'
+    | 'Concentration'
+    | 'Pressure'
+    | 'Temperature'
+    | 'Time'
+    | 'Flow'
+    | 'Energy'
+    | 'Dimensionless';
+
+export type UnitCommonForUI =
+    /* Mass */         'kg' | 'g' | 'mg' | 'µg'
+    /* Volume */       | 'm3' | 'L' | 'mL' | 'µL'
+    /* Area */         | 'm2' | 'cm2' | 'mm2'
+    /* Length */       | 'm' | 'cm' | 'mm' | 'µm'
+    /* Concentration */| '%' | 'ppm' | 'ppb' | 'mg/L' | 'g/L' | 'mol/L'
+    /* Pressure */     | 'bar' | 'kPa' | 'hPa' | 'Pa'
+    /* Temperature */  | '°C' | 'K'
+    /* Time */         | 's' | 'min' | 'h' | 'd'
+    /* Flow */         | 'L/min' | 'm3/h' | 'kg/h' | 'Nm3/h'
+    /* Energy */       | 'kJ' | 'MJ' | 'kWh'
+    /* Dimless */      | 'pH' | 'µS/cm';
+
+export interface UnitOptionForUI {
+    code: UnitCommonForUI;
+    label: string;
+    group: UnitGroupForUI;
+}
+
+export const UNIT_OPTIONS_FOR_UI: UnitOptionForUI[] = [
+    // Mass
+    { code: 'kg',  label: 'kilogram (kg)',               group: 'Mass' },
+    { code: 'g',   label: 'gram (g)',                    group: 'Mass' },
+    { code: 'mg',  label: 'milligram (mg)',              group: 'Mass' },
+    { code: 'µg',  label: 'microgram (µg)',              group: 'Mass' },
+
+    // Volume
+    { code: 'm3',  label: 'cubic meter (m³)',            group: 'Volume' },
+    { code: 'L',   label: 'liter (L)',                   group: 'Volume' },
+    { code: 'mL',  label: 'milliliter (mL)',             group: 'Volume' },
+    { code: 'µL',  label: 'microliter (µL)',             group: 'Volume' },
+
+    // Area
+    { code: 'm2',  label: 'square meter (m²)',           group: 'Area' },
+    { code: 'cm2', label: 'square centimeter (cm²)',     group: 'Area' },
+    { code: 'mm2', label: 'square millimeter (mm²)',     group: 'Area' },
+
+    // Length
+    { code: 'm',   label: 'meter (m)',                   group: 'Length' },
+    { code: 'cm',  label: 'centimeter (cm)',             group: 'Length' },
+    { code: 'mm',  label: 'millimeter (mm)',             group: 'Length' },
+    { code: 'µm',  label: 'micrometer (µm)',             group: 'Length' },
+
+    // Concentration
+    { code: '%',    label: 'percent (%)',                group: 'Concentration' },
+    { code: 'ppm',  label: 'parts per million (ppm)',    group: 'Concentration' },
+    { code: 'ppb',  label: 'parts per billion (ppb)',    group: 'Concentration' },
+    { code: 'mg/L', label: 'mg per liter',               group: 'Concentration' },
+    { code: 'g/L',  label: 'g per liter',                group: 'Concentration' },
+    { code: 'mol/L',label: 'mole per liter',             group: 'Concentration' },
+
+    // Pressure
+    { code: 'bar', label: 'bar',                         group: 'Pressure' },
+    { code: 'kPa', label: 'kilopascal (kPa)',            group: 'Pressure' },
+    { code: 'hPa', label: 'hectopascal (hPa)',           group: 'Pressure' },
+    { code: 'Pa',  label: 'pascal (Pa)',                 group: 'Pressure' },
+
+    // Temperature
+    { code: '°C', label: 'degree Celsius',               group: 'Temperature' },
+    { code: 'K',  label: 'kelvin (K)',                   group: 'Temperature' },
+
+    // Time
+    { code: 's',   label: 'second (s)',                  group: 'Time' },
+    { code: 'min', label: 'minute (min)',                group: 'Time' },
+    { code: 'h',   label: 'hour (h)',                    group: 'Time' },
+    { code: 'd',   label: 'day (d)',                     group: 'Time' },
+
+    // Flow
+    { code: 'L/min',  label: 'liter per minute',         group: 'Flow' },
+    { code: 'm3/h',   label: 'cubic meter per hour',     group: 'Flow' },
+    { code: 'kg/h',   label: 'kilogram per hour',        group: 'Flow' },
+    { code: 'Nm3/h',  label: 'normal m³ per hour',       group: 'Flow' },
+
+    // Energy
+    { code: 'kJ',  label: 'kilojoule (kJ)',              group: 'Energy' },
+    { code: 'MJ',  label: 'megajoule (MJ)',              group: 'Energy' },
+    { code: 'kWh', label: 'kilowatt-hour (kWh)',         group: 'Energy' },
+
+    // Dimensionless / conductivity
+    { code: 'pH',    label: 'pH',                        group: 'Dimensionless' },
+    { code: 'µS/cm', label: 'microsiemens per cm',       group: 'Dimensionless' }
+];
+
+
+===== ./enumsAndUnits/UnitSchema.ts =====
+import { z } from 'zod';
+
+const pattern =
+    /^(%|ppm|ppb|(?:µ?[a-zA-Z]{1,4}[0-9]{0,3}|°[CF]))(?:[/*·](?:µ?[a-zA-Z]{1,4}[0-9]{0,3}|°[CF]))*$/;
+
+export const unitSchema = z
+    .string()
+    .regex(pattern, { message: 'Invalid UCUM unit' })
+    .brand<'Unit'>();
+
+export type Unit = z.infer<typeof unitSchema>;
+
+===== ./payloads/AdditionPayload.ts =====
+import {PayloadMode} from "../enumsAndUnits/ProcesEnums.ts";
+
+export interface AdditionPayload {
+    mode: PayloadMode;
+    feedRateKgMin?: number;
+    durationMin: number;
+}
+
+===== ./payloads/AnalysisPayload.ts =====
+export interface AnalysisPayload {
+    analysisName: string;
+    specification?: string;
+    rawDataUri?: string;
+    processedDataUri?: string;
+    passStepId: string;
+    failStepId: string;
+}
+
+===== ./payloads/SeparationPayload.ts =====
+import {SeparationMethod, SeparationSubMethod} from "../enumsAndUnits/ProcesEnums.ts";
+
+export interface SeparationPayload {
+    /** base separation method */
+    method: SeparationMethod;
+
+    /** additional method — optional */
+    subMethod?: SeparationSubMethod;
+
+    /** e.g. 'remove solvent', 'collect cake', 'reduce moisture <5 %' */
+    objective?: string;
+}
+
+===== ./payloads/StoragePayload.ts =====
+import {StorageContainer} from "../enumsAndUnits/ProcesEnums.ts";
+
+export interface StoragePayload {
+    locationId: string;
+    container: StorageContainer;
+    containerVolumeL: number;
+    maxHoldHours?: number;
+}
+
+===== ./payloads/TransformationPayload.ts =====
+import {Transformation} from "../enumsAndUnits/ProcesEnums.ts";
+
+export interface TransformationPayload {
+    transformation: Transformation;
+    temperatureProfile: string;   // JSON or free text
+    pressureProfile?: string;
+    targetConversionPct?: number;
+}
+
