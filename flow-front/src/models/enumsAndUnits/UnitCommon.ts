@@ -12,7 +12,7 @@ export type UnitGroupForUI =
     | 'Dimensionless';
 
 export type UnitCommonForUI =
-    /* Mass */         'kg' | 'g' | 'mg' | 'µg'
+    /* Mass */         |'kg' | 'g' | 'mg' | 'µg'
     /* Volume */       | 'm3' | 'L' | 'mL' | 'µL'
     /* Area */         | 'm2' | 'cm2' | 'mm2'
     /* Length */       | 'm' | 'cm' | 'mm' | 'µm'
@@ -20,7 +20,7 @@ export type UnitCommonForUI =
     /* Pressure */     | 'bar' | 'kPa' | 'hPa' | 'Pa'
     /* Temperature */  | '°C' | 'K'
     /* Time */         | 's' | 'min' | 'h' | 'd'
-    /* Flow */         | 'L/min' | 'm3/h' | 'kg/h' | 'Nm3/h'
+    /* Flow */         | 'mL/min'| 'L/min' | 'm3/h' | 'kg/h' | 'Nm3/h'
     /* Energy */       | 'kJ' | 'MJ' | 'kWh'
     /* Dimless */      | 'pH' | 'µS/cm';
 
@@ -79,6 +79,7 @@ export const UNIT_OPTIONS_FOR_UI: UnitOptionForUI[] = [
     { code: 'd',   label: 'day (d)',                     group: 'Time' },
 
     // Flow
+    { code: 'mL/min', label: 'milliliter per minute',    group: 'Flow' },
     { code: 'L/min',  label: 'liter per minute',         group: 'Flow' },
     { code: 'm3/h',   label: 'cubic meter per hour',     group: 'Flow' },
     { code: 'kg/h',   label: 'kilogram per hour',        group: 'Flow' },
