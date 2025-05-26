@@ -1,6 +1,6 @@
 import {EquipmentUsage} from "./common/Equipment.ts";
 import {MaterialUsage} from "./common/Material.ts";
-import {ProcessParameter} from "./common/Parameter.ts";
+import {ActualParameter, ProcessParameter} from "./common/Parameter.ts";
 import {UtilityUsage} from "./common/Utility.ts";
 import {StepKind} from "./enumsAndUnits/ProcesEnums.ts";
 import {AdditionPayload} from "./payloads/AdditionPayload.ts";
@@ -33,7 +33,9 @@ export interface BaseStep {
     /** Optional; empty for most non-transformative steps */
     outputWastes:    MaterialUsage[];
 
-    parameters: ProcessParameter[];
+    processParameters: ProcessParameter[];
+
+    actualParameters: ActualParameter[];
 
     /** Optional; e.g., CoolingWater, Vacuum */
     utilities?: UtilityUsage[];
