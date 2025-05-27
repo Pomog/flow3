@@ -4,7 +4,7 @@ export const ROLES = roles as const;
 export type Role = typeof ROLES[number];
 
 export interface User {
-    id: string;
+    userId: string;
     username: string;
     fullName: string;
     email: string;

@@ -1,7 +1,7 @@
 ===== ./BaseStep.ts =====
 import {EquipmentUsage} from "./common/Equipment.ts";
 import {MaterialUsage} from "./common/Material.ts";
-import {ProcessParameter} from "./common/Parameter.ts";
+import {ActualParameter, ProcessParameter} from "./common/Parameter.ts";
 import {UtilityUsage} from "./common/Utility.ts";
 import {StepKind} from "./enumsAndUnits/ProcesEnums.ts";
 import {AdditionPayload} from "./payloads/AdditionPayload.ts";
@@ -12,7 +12,7 @@ import {TransformationPayload} from "./payloads/TransformationPayload.ts";
 import {UserAction} from "./common/UserAction.ts";
 
 export interface BaseStep {
-    id: string;
+    baseStepId: string;
     kind: StepKind;
     title: string;
     projectName: string;
@@ -34,7 +34,9 @@ export interface BaseStep {
     /** Optional; empty for most non-transformative steps */
     outputWastes:    MaterialUsage[];
 
-    parameters: ProcessParameter[];
+    processParameters: ProcessParameter[];
+
+    actualParameters: ActualParameter[];
 
     /** Optional; e.g., CoolingWater, Vacuum */
     utilities?: UtilityUsage[];
@@ -90,9 +92,11 @@ export interface MaterialRef {
     densityKgL?: number;
     costPerKg?: number;
     molarMass?: number;
+    assay?: number;
 }
 
 export interface MaterialUsage extends MaterialRef {
+    materialUsageId: string;
     source: MaterialSource;
     amountKg: number;
     amountL?: number;
@@ -105,10 +109,21 @@ import { Criticality } from '../enumsAndUnits/ProcesEnums.ts';
 import {Unit} from "../enumsAndUnits/UnitSchema.ts";
 
 export interface ProcessParameter {
+    processParameterId: string;
     name: string;
     target: number;
+    max: number;
+    min: number;
     unit: Unit;
     criticality: Criticality;
+}
+
+export interface ActualParameter {
+    actualParameterId: string;
+    name: string;
+    value: number;
+    unit: Unit;
+    timeStamp: string;      // ISO-8601
 }
 
 ===== ./common/User.ts =====
@@ -118,7 +133,7 @@ export const ROLES = roles as const;
 export type Role = typeof ROLES[number];
 
 export interface User {
-    id: string;
+    userId: string;
     username: string;
     fullName: string;
     email: string;
@@ -141,6 +156,7 @@ import {User} from "./User.ts";
 import {AuditAction} from "../enumsAndUnits/AuditAction.ts";
 
 export interface UserAction {
+    userActionId: string;
     userId: string;
 
     user: User;
@@ -160,18 +176,19 @@ export interface UserAction {
      * hash of the signature object - User + Content;
      * lets reviewers prove that the signature really belongs to User
      */
-    signatureHash: string;
+    signatureKey: string;
 }
 
 ===== ./common/Utility.ts =====
 import {Utility} from "../enumsAndUnits/ProcesEnums.ts";
-import {unitSchema} from "../enumsAndUnits/UnitSchema.ts";
+import {Unit} from "../enumsAndUnits/UnitSchema.ts";
 
 export interface UtilityUsage {
+    utilityUsageId: string;
     utility: Utility,
     mediumName?: string; // 'Nitrogen'
     amount: number;
-    unit: unitSchema;
+    unit: Unit;
 }
 
 ===== ./dump_tree.sh =====
@@ -284,7 +301,7 @@ export type UnitGroupForUI =
     | 'Dimensionless';
 
 export type UnitCommonForUI =
-    /* Mass */         'kg' | 'g' | 'mg' | 'µg'
+    /* Mass */         |'kg' | 'g' | 'mg' | 'µg'
     /* Volume */       | 'm3' | 'L' | 'mL' | 'µL'
     /* Area */         | 'm2' | 'cm2' | 'mm2'
     /* Length */       | 'm' | 'cm' | 'mm' | 'µm'
@@ -292,7 +309,7 @@ export type UnitCommonForUI =
     /* Pressure */     | 'bar' | 'kPa' | 'hPa' | 'Pa'
     /* Temperature */  | '°C' | 'K'
     /* Time */         | 's' | 'min' | 'h' | 'd'
-    /* Flow */         | 'L/min' | 'm3/h' | 'kg/h' | 'Nm3/h'
+    /* Flow */         | 'mL/min'| 'L/min' | 'm3/h' | 'kg/h' | 'Nm3/h'
     /* Energy */       | 'kJ' | 'MJ' | 'kWh'
     /* Dimless */      | 'pH' | 'µS/cm';
 
@@ -351,6 +368,7 @@ export const UNIT_OPTIONS_FOR_UI: UnitOptionForUI[] = [
     { code: 'd',   label: 'day (d)',                     group: 'Time' },
 
     // Flow
+    { code: 'mL/min', label: 'milliliter per minute',    group: 'Flow' },
     { code: 'L/min',  label: 'liter per minute',         group: 'Flow' },
     { code: 'm3/h',   label: 'cubic meter per hour',     group: 'Flow' },
     { code: 'kg/h',   label: 'kilogram per hour',        group: 'Flow' },
@@ -384,6 +402,7 @@ export type Unit = z.infer<typeof unitSchema>;
 import {PayloadMode} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface AdditionPayload {
+    additionPayloadId: string;
     mode: PayloadMode;
     feedRateKgMin?: number;
     durationMin: number;
@@ -391,6 +410,7 @@ export interface AdditionPayload {
 
 ===== ./payloads/AnalysisPayload.ts =====
 export interface AnalysisPayload {
+    analysisPayloadId: string;
     analysisName: string;
     specification?: string;
     rawDataUri?: string;
@@ -403,6 +423,7 @@ export interface AnalysisPayload {
 import {SeparationMethod, SeparationSubMethod} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface SeparationPayload {
+    separationPayloadId: string;
     /** base separation method */
     method: SeparationMethod;
 
@@ -417,19 +438,27 @@ export interface SeparationPayload {
 import {StorageContainer} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface StoragePayload {
-    locationId: string;
+    storagePayloadId: string;
+    location: string;
     container: StorageContainer;
     containerVolumeL: number;
     maxHoldHours?: number;
+    maxHoldTemperatureCelsius?: number;
+    minHoldTemperatureCelsius?: number;
+    inertAtmosphere: boolean;
+    lightProtection: boolean;
 }
 
 ===== ./payloads/TransformationPayload.ts =====
 import {Transformation} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface TransformationPayload {
+    transformationPayloadId: string;
     transformation: Transformation;
     temperatureProfile: string;   // JSON or free text
     pressureProfile?: string;
     targetConversionPct?: number;
+    stirringProfile?: string;
+    energyProfile?: string;
 }
 

@@ -11,7 +11,7 @@ import {TransformationPayload} from "./payloads/TransformationPayload.ts";
 import {UserAction} from "./common/UserAction.ts";
 
 export interface BaseStep {
-    id: string;
+    baseStepId: string;
     kind: StepKind;
     title: string;
     projectName: string;

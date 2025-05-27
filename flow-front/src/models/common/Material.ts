@@ -9,9 +9,11 @@ export interface MaterialRef {
     densityKgL?: number;
     costPerKg?: number;
     molarMass?: number;
+    assay?: number;
 }
 
 export interface MaterialUsage extends MaterialRef {
+    materialUsageId: string;
     source: MaterialSource;
     amountKg: number;
     amountL?: number;

@@ -2,6 +2,7 @@ import { Criticality } from '../enumsAndUnits/ProcesEnums.ts';
 import {Unit} from "../enumsAndUnits/UnitSchema.ts";
 
 export interface ProcessParameter {
+    processParameterId: string;
     name: string;
     target: number;
     max: number;
@@ -11,6 +12,7 @@ export interface ProcessParameter {
 }
 
 export interface ActualParameter {
+    actualParameterId: string;
     name: string;
     value: number;
     unit: Unit;

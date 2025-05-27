@@ -1,4 +1,5 @@
 export interface AnalysisPayload {
+    analysisPayloadId: string;
     analysisName: string;
     specification?: string;
     rawDataUri?: string;

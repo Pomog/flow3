@@ -2,6 +2,7 @@ import {User} from "./User.ts";
 import {AuditAction} from "../enumsAndUnits/AuditAction.ts";
 
 export interface UserAction {
+    userActionId: string;
     userId: string;
 
     user: User;
@@ -21,5 +22,5 @@ export interface UserAction {
      * hash of the signature object - User + Content;
      * lets reviewers prove that the signature really belongs to User
      */
-    signatureHash: string;
+    signatureKey: string;
 }

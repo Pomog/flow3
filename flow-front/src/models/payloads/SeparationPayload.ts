@@ -1,6 +1,7 @@
 import {SeparationMethod, SeparationSubMethod} from "../enumsAndUnits/ProcesEnums.ts";
 
 export interface SeparationPayload {
+    separationPayloadId: string;
     /** base separation method */
     method: SeparationMethod;
 
